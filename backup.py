@@ -109,7 +109,7 @@ class Backup:
                 raise ValueError("No directory for versions configured")
             args += ['-b', '--backup-dir', str(self.versions)]
         for e in excluded.keys():
-            args += ["--exclude", str(e)+"/**"]
+            args += ["--exclude", str(e.relative_to(sub_path))+"/**"]
         args += [str(self.source / sub_path)+"/", str(self.destination / sub_path)+"/"]
         command_line = [RSYNC_BINARY] + args
         print(" ".join(command_line))
