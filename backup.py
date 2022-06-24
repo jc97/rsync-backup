@@ -27,6 +27,22 @@ class Backup:
 
     config: Dict[Path, Optional[BackupFlag]]
 
+    def list_file_versions(self, needle: Path) -> None:
+        if self.versions is None:
+            raise ValueError("No directory for old versions configured")
+        if not self.versions.is_absolute():
+            self.versions = self.destination / self.versions
+        if not self.versions.exists():
+            raise FileNotFoundError("Path " + str(self.versions) + " does not exist.")
+        for backup_dir in sorted(self.versions.iterdir(), key=os.path.getctime, reverse=True):
+            if backup_dir.is_dir():
+                if (backup_dir / needle).exists():
+                    file = backup_dir / needle
+                    print("Version: File Date: {0} Backup: {1}".format(
+                        datetime.fromtimestamp(file.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                        backup_dir.name
+                    ))
+
     def run(self, dry: bool = False) -> None:
         if self.check_file:
             if not self.check_file.is_absolute():
@@ -124,11 +140,27 @@ def main(backups: Optional[Dict[str, Backup]] = None):
 
     list_parser = action_parser.add_parser('list', help="list defined backups")
 
+    find_parser = action_parser.add_parser('find', help="find old versions of files")
+    find_parser.add_argument(
+        "backup",
+        metavar="BACKUP",
+        choices=backups.keys(),
+        help="The backup to use."
+    )
+    find_parser.add_argument(
+        "path",
+        metavar="PATH",
+        type=Path,
+        help="The path to look for."
+    )
+
     args = parser.parse_args()
     if args.action == 'list':
         list_backups(backups)
     elif args.action == 'run':
         backups[args.backup].run(dry=args.simulate)
+    elif args.action == "find":
+        backups[args.backup].list_file_versions(args.path)
     else:
         parser.print_help()
 
