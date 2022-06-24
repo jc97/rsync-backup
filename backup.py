@@ -1,17 +1,19 @@
-import os.path
+import argparse
 from dataclasses import dataclass
 from datetime import datetime
 from enum import auto, Flag
+import os.path
 from pathlib import Path
 import shlex
 from typing import Dict, Optional
 
 RSYNC_BINARY = "rsync"
+SOURCE_ROOT = Path(".")
 
 
 class BackupFlag(Flag):
     NONE = auto()
-    KEEP_VERSION = auto()
+    KEEP_VERSIONS = auto()
     KEEP_DELETED_FILES = auto()
     EXCLUDE = auto()
 
@@ -86,7 +88,7 @@ class Backup:
             args += ["-n"]
         if BackupFlag.KEEP_DELETED_FILES not in config:
             args += ['--delete', '--delete-after']
-        if BackupFlag.KEEP_VERSION in config:
+        if BackupFlag.KEEP_VERSIONS in config:
             if self.versions is None:
                 raise ValueError("No directory for versions configured")
             args += ['-b', '--backup-dir', str(self.versions)]
@@ -98,11 +100,42 @@ class Backup:
         os.system(shlex.join(command_line))
         for e in excluded.keys():
             if BackupFlag.EXCLUDE not in excluded[e]:
+                print("")
+                print("---")
+                print("")
                 self._backup_directory(e, dry)
 
 
-def main():
-    pass
+def main(backups: Optional[Dict[str, Backup]] = None):
+    if backups is None:
+        backups={}
+    parser = argparse.ArgumentParser(prog="differential-backup",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    action_parser = parser.add_subparsers(help="action", dest='action')
+
+    run_parser = action_parser.add_parser('run', help="run a backup")
+    run_parser.add_argument('--simulate', '-s', action='store_true', help="Dry run of rsync (-n argument)")
+    run_parser.add_argument(
+        "backup",
+        metavar="BACKUP",
+        choices=backups.keys(),
+        help="The backup to execute."
+    )
+
+    list_parser = action_parser.add_parser('list', help="list defined backups")
+
+    args = parser.parse_args()
+    if args.action == 'list':
+        list_backups(backups)
+    elif args.action == 'run':
+        backups[args.backup].run(dry=args.simulate)
+    else:
+        parser.print_help()
+
+
+def list_backups(backups: Dict[str, Backup]):
+    for backup in backups.keys():
+        print(backup)
 
 
 if __name__ == "__main__":
