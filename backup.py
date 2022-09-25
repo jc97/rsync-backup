@@ -110,7 +110,7 @@ class Backup:
         if BackupFlag.KEEP_VERSIONS in config:
             if self.versions is None:
                 raise ValueError("No directory for versions configured")
-            args += ['-b', '--backup-dir', str(self.versions)]
+            args += ['-b', '--backup-dir', str(self.versions / sub_path)]
         for e in excluded.keys():
             args += ["--exclude", "/"+str(e.relative_to(sub_path))+"/**"]
         if self.relative_exclude_list:
