@@ -5,7 +5,7 @@ from enum import auto, Flag
 import os.path
 from pathlib import Path
 import shlex
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 RSYNC_BINARY = "rsync"
 SOURCE_ROOT = Path(".")
@@ -26,6 +26,8 @@ class Backup:
     check_file: Optional[Path]
 
     config: Dict[Path, Optional[BackupFlag]]
+
+    relative_exclude_list: Optional[List[str]] = None
 
     def list_file_versions(self, needle: Path) -> None:
         if self.versions is None:
@@ -110,7 +112,10 @@ class Backup:
                 raise ValueError("No directory for versions configured")
             args += ['-b', '--backup-dir', str(self.versions)]
         for e in excluded.keys():
-            args += ["--exclude", str(e.relative_to(sub_path))+"/**"]
+            args += ["--exclude", "/"+str(e.relative_to(sub_path))+"/**"]
+        if self.relative_exclude_list:
+            for e in self.relative_exclude_list:
+                args += ["--exclude", e]
         args += [str(self.source / sub_path)+"/", str(self.destination / sub_path)+"/"]
         command_line = [RSYNC_BINARY] + args
         print(" ".join(command_line))
