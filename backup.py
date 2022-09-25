@@ -54,7 +54,8 @@ class Backup:
                 self.versions = self.destination / self.versions
             subdir = datetime.now().strftime("%Y%m%d_%H%M%S")
             self.versions /= subdir
-            self.versions.mkdir()
+            if not dry:
+                self.versions.mkdir()
         self._backup_directory(Path("./"), dry)
 
     def _get_path_config(self, path: Path) -> BackupFlag:
