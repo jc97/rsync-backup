@@ -22,11 +22,10 @@ class BackupFlag(Flag):
 class Backup:
     source: Path
     destination: Path
-    versions: Optional[Path]
-    check_file: Optional[Path]
-
     config: Dict[Path, Optional[BackupFlag]]
 
+    versions: Optional[Path] = None
+    check_file: Optional[Path] = None
     relative_exclude_list: Optional[List[str]] = None
 
     def list_file_versions(self, needle: Path) -> None:
