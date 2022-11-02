@@ -93,7 +93,7 @@ class Backup:
                 if self._is_sub_path(e, p):
                     include = False
                     break
-                # wenn element subpath von p: element löschen und p einfügen
+                # if element e is sub path of p, delete e
                 if self._is_sub_path(p, e):
                     excluded.pop(e)
             if include:
@@ -130,7 +130,7 @@ class Backup:
 
 def main(backups: Optional[Dict[str, Backup]] = None):
     if backups is None:
-        backups={}
+        backups = {}
     parser = argparse.ArgumentParser(prog="differential-backup",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     action_parser = parser.add_subparsers(help="action", dest='action')
